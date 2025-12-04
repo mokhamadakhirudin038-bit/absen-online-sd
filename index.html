@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABSEN ONLINE</title>
+
+<!-- Open Graph Meta Tags -->
+<meta property="og:title" content="Absen online Geser untuk Masuk">
+<meta property="og:description" content="Absen Online Ayo geser slider untuk membuka halaman utama.">
+<meta property="og:image" content="https://i.postimg.cc/NFM74bKm/buku-tum.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://domain-kamu.com/">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Geser untuk Masuk">
+<meta name="twitter:description" content="Ayo geser slider untuk membuka halaman utama.">
+<meta name="twitter:image" content="https://i.postimg.cc/NFM74bKm/buku-tum.jpg">
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    background: url("https://i.imgur.com/H9og9Ed.jpg") no-repeat center center/cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Poppins", sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 0;
+  }
+
+  .slider-container {
+    position: relative;
+    z-index: 1;
+    width: 500px;
+    height: 100px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.8);
+    font-size: 22px;
+    letter-spacing: 1px;
+    user-select: none;
+    box-shadow: inset 0 0 25px rgba(255,255,255,0.05);
+    overflow: hidden;
+  }
+
+  .slider-button {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ffffff, #e0e0e0);
+    box-shadow: 0 0 15px rgba(255,255,255,0.7);
+    cursor: grab;
+    transition: left 0.2s, background 0.4s, box-shadow 0.4s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .slider-button.active {
+    background: linear-gradient(145deg, #00ff7f, #00cc66);
+    box-shadow: 0 0 25px #00ff7f;
+    color: white;
+  }
+
+  .slide-text {
+    z-index: 1;
+    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+  }
+
+  .fade-out {
+    animation: fadeOut 1s forwards;
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+  }
+
+  .glow-line {
+    position: absolute;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: skewX(-20deg);
+    animation: glowMove 2.5s linear infinite;
+  }
+
+  @keyframes glowMove {
+    to { left: 150%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slider-container" id="slider">
+  <div class="glow-line"></div>
+  <div class="slide-text">Geser untuk Masuk</div>
+  <div class="slider-button" id="sliderBtn"></div>
+</div>
+
+<script>
+  const slider = document.getElementById("slider");
+  const sliderBtn = document.getElementById("sliderBtn");
+  const maxRight = slider.offsetWidth - sliderBtn.offsetWidth - 16;
+
+  let isDragging = false, startX = 0, currentX = 0;
+
+  sliderBtn.addEventListener("mousedown", e => {
+    isDragging = true;
+    startX = e.clientX - currentX;
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      if (currentX < maxRight * 0.9) {
+        currentX = 0;
+        sliderBtn.style.left = "8px";
+        sliderBtn.classList.remove("active");
+      } else {
+        masukHalaman();
+      }
+    }
+  });
+
+  document.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    currentX = e.clientX - startX;
+    if (currentX < 0) currentX = 0;
+    if (currentX > maxRight) currentX = maxRight;
+    sliderBtn.style.left = currentX + 8 + "px";
+
+    if (currentX > maxRight * 0.85) {
+      sliderBtn.classList.add("active");
+    } else {
+      sliderBtn.classList.remove("active");
+    }
+  });
+
+ function masukHalaman() {
+    slider.classList.add("fade-out");
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 800);
+  }
+</script>
+
+</body>
+</html>

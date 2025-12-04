@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Absensi Siswa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        /* Enhanced Slider Styles */
+        .slider {
+            position: relative;
+            width: 100%;
+            height: 70px;
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border-radius: 35px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .slider::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+            border-radius: 35px;
+            pointer-events: none;
+        }
+        
+        .slider.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #059669;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .slider-thumb {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 2;
+        }
+        
+        .slider.active .slider-thumb {
+            transform: translateX(calc(100% + 12px));
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2), 0 3px 10px rgba(0,0,0,0.15);
+        }
+        
+        .slider-text {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+        
+        .slider-text.left {
+            left: 80px;
+            color: #6b7280;
+        }
+        
+        .slider-text.right {
+            right: 80px;
+            color: #ffffff;
+            opacity: 0;
+        }
+        
+        .slider.active .slider-text.left {
+            opacity: 0;
+        }
+        
+        .slider.active .slider-text.right {
+            opacity: 1;
+        }
+        
+        /* Connection Modal Styles */
+        .connection-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .connection-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .connection-modal.show .connection-content {
+            transform: scale(1);
+        }
+        
+        /* Loading Animation */
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Success Animation */
+        .success-check {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #10b981;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            animation: successPulse 0.6s ease-out;
+        }
+        
+        @keyframes successPulse {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Enhanced Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Gradient Background */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-bg-green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        /* Enhanced Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-full gradient-bg">
+    <!-- Connection Modal -->
+    <div id="connectionModal" class="connection-modal">
+        <div class="connection-content">
+            <div id="connectionLoading">
+                <div class="loading-spinner"></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Menghubungkan ke Database</h3>
+                <p class="text-gray-600">Sedang menghubungkan ke Supabase...</p>
+            </div>
+            <div id="connectionSuccess" class="hidden">
+                <div class="success-check">✓</div>
+                <h3 class="text-xl font-bold text-green-600 mb-2">Terhubung!</h3>
+                <p class="text-gray-600">Koneksi ke database berhasil</p>
+            </div>
+            <div id="connectionError" class="hidden">
+                <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4">✗</div>
+                <h3 class="text-xl font-bold text-red-600 mb-2">Koneksi Gagal</h3>
+                <p class="text-gray-600 mb-4">Tidak dapat terhubung ke database</p>
+                <button onclick="retryConnection()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Coba Lagi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="min-h-full flex items-center justify-center p-4 hidden">
+        <div class="glass-card rounded-2xl shadow-xl p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Absensi Siswa</h1>
+                <p class="text-gray-600">Silakan login untuk melakukan absensi</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa</label>
+                    <select id="studentName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Pilih nama Anda</option>
+                        <option value="Althafarizqi Gilang Pratama">Althafarizqi Gilang Pratama</option>
+                        <option value="Imroatin Fatikha Rachma">Imroatin Fatikha Rachma</option>
+                        <option value="Muhamad Rifki Bilal">Muhamad Rifki Bilal</option>
+                        <option value="Nurul Mubin">Nurul Mubin</option>
+                        <option value="Mukhamad Yusuf Maulana">Mukhamad Yusuf Maulana</option>
+                        <option value="Nazrul Anan">Nazrul Anan</option>
+                        <option value="Rahma Aditya">Rahma Aditya</option>
+                        <option value="Raya Auliya">Raya Auliya</option>
+                        <option value="Varisa Nur Atifa">Varisa Nur Atifa</option>
+                        <option value="Vita Septiana Putri">Vita Septiana Putri</option>
+                        <option value="Wahyu Jian Pangestu">Wahyu Jian Pangestu</option>
+                        <option value="Budi Sudarsono">Budi Sudarsono</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" placeholder="Masukkan password Anda" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Format: NamaPertama2025 (contoh: Althafarizqi2025)</p>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                    Masuk
+                </button>
+            </form>
+            
+            <div id="loginError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+                Nama atau password salah!
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Page -->
+    <div id="attendancePage" class="min-h-full p-4 hidden">
+        <div class="max-w-md mx-auto">
+            <!-- Header -->
+            <div class="glass-card rounded-2xl shadow-lg p-6 mb-6 slide-up">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Absensi Hari Ini</h2>
+                    <div id="currentDate" class="text-lg text-gray-600 mb-1"></div>
+                    <div id="currentDay" class="text-sm text-gray-500"></div>
+                    <div class="mt-4 p-3 gradient-bg-green rounded-lg">
+                        <p class="text-sm text-white">Selamat datang, <span id="loggedInStudent" class="font-semibold"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Options -->
+            <div class="glass-card rounded-2xl shadow-lg p-6 mb-6 slide-up">
+                <h3 class="text-lg font-semibold text-gray-800 mb-6">Pilih Status Kehadiran</h3>
+                
+                <!-- Hadir Option -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Hadir</label>
+                    <div id="hadirSlider" class="slider" onclick="toggleSlider('hadir')">
+                        <div class="slider-thumb">
+                            <span>✓</span>
+                        </div>
+                        <div class="slider-text left">Geser untuk Hadir</div>
+                        <div class="slider-text right">Hadir ✓</div>
+                    </div>
+                </div>
+
+                <!-- Ijin Option -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Ijin</label>
+                    <div id="ijinSlider" class="slider" onclick="toggleSlider('ijin')">
+                        <div class="slider-thumb">
+                            <span>!</span>
+                        </div>
+                        <div class="slider-text left">Geser untuk Ijin</div>
+                        <div class="slider-text right">Ijin !</div>
+                    </div>
+                    
+                    <div id="ijinReason" class="mt-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alasan Ijin</label>
+                        <textarea id="reasonText" placeholder="Tuliskan alasan ijin Anda..." 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-20 resize-none"></textarea>
+                    </div>
+                </div>
+
+                <button id="submitAttendance" onclick="submitAttendance()" 
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                        disabled>
+                    Kirim Absensi
+                </button>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg hidden">
+                <p class="font-semibold">Absensi berhasil dikirim!</p>
+                <p class="text-sm">Terima kasih telah melakukan absensi hari ini.</p>
+            </div>
+
+            <!-- Logout Button -->
+            <div class="text-center mt-6">
+                <button onclick="logout()" class="text-gray-500 hover:text-gray-700 text-sm underline">
+                    Keluar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStudent = '';
+        let attendanceStatus = '';
+        
+        // Supabase configuration
+        const SUPABASE_URL = "https://ltabkgjxeyxztvrigwue.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0YWJrZ2p4ZXl4enR2cmlnd3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MTE2ODYsImV4cCI6MjA3NTk4NzY4Nn0.scLP7ECH50M4iqIvlCgub_FueRZvZXVwjJpr9oZM5hI";
+        
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Connection functions
+        async function testConnection() {
+            try {
+                const { data, error } = await supabase
+                    .from('absensi')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error) throw error;
+                return true;
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                return false;
+            }
+        }
+        
+        async function initializeConnection() {
+            const modal = document.getElementById('connectionModal');
+            const loading = document.getElementById('connectionLoading');
+            const success = document.getElementById('connectionSuccess');
+            const errorDiv = document.getElementById('connectionError');
+            
+            // Show modal
+            modal.classList.add('show');
+            
+            // Wait a bit for visual effect
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const isConnected = await testConnection();
+            
+            if (isConnected) {
+                // Show success
+                loading.classList.add('hidden');
+                success.classList.remove('hidden');
+                
+                // Hide modal after 1.5 seconds and show login
+                setTimeout(() => {
+                    modal.classList.remove('show');
+                    document.getElementById('loginPage').classList.remove('hidden');
+                }, 1500);
+            } else {
+                // Show error
+                loading.classList.add('hidden');
+                errorDiv.classList.remove('hidden');
+            }
+        }
+        
+        function retryConnection() {
+            const loading = document.getElementById('connectionLoading');
+            const success = document.getElementById('connectionSuccess');
+            const errorDiv = document.getElementById('connectionError');
+            
+            // Reset states
+            loading.classList.remove('hidden');
+            success.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            
+            // Retry connection
+            setTimeout(initializeConnection, 500);
+        }
+        
+        // Initialize date display
+        function updateDateTime() {
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const dayName = days[now.getDay()];
+            const date = now.getDate();
+            const month = months[now.getMonth()];
+            const year = now.getFullYear();
+            
+            document.getElementById('currentDate').textContent = `${date} ${month} ${year}`;
+            document.getElementById('currentDay').textContent = dayName;
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentName = document.getElementById('studentName').value;
+            const password = document.getElementById('password').value;
+            
+            if (!studentName || !password) {
+                showError('Silakan pilih nama dan masukkan password!');
+                return;
+            }
+            
+            // Generate expected password (first name + 2025)
+            const firstName = studentName.split(' ')[0];
+            const expectedPassword = firstName + '2025';
+            
+            if (password === expectedPassword) {
+                currentStudent = studentName;
+                document.getElementById('loggedInStudent').textContent = studentName;
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('attendancePage').classList.remove('hidden');
+                updateDateTime();
+                hideError();
+            } else {
+                showError('Nama atau password salah!');
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        function toggleSlider(type) {
+            const hadirSlider = document.getElementById('hadirSlider');
+            const ijinSlider = document.getElementById('ijinSlider');
+            const ijinReason = document.getElementById('ijinReason');
+            const submitBtn = document.getElementById('submitAttendance');
+            
+            if (type === 'hadir') {
+                hadirSlider.classList.add('active');
+                ijinSlider.classList.remove('active');
+                ijinReason.classList.add('hidden');
+                attendanceStatus = 'Hadir';
+                submitBtn.disabled = false;
+            } else if (type === 'ijin') {
+                ijinSlider.classList.add('active');
+                hadirSlider.classList.remove('active');
+                ijinReason.classList.remove('hidden');
+                attendanceStatus = 'Ijin';
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function submitAttendance() {
+            const reasonText = document.getElementById('reasonText').value;
+            
+            if (attendanceStatus === 'Ijin' && !reasonText.trim()) {
+                alert('Silakan masukkan alasan ijin!');
+                return;
+            }
+            
+            const attendanceData = {
+                nama: currentStudent,
+                tanggal: new Date().toISOString().split('T')[0],
+                status: attendanceStatus,
+                alasan: attendanceStatus === 'Ijin' ? reasonText : null
+            };
+            
+            try {
+                console.log('Menyimpan data absensi:', attendanceData);
+                
+                // Simpan ke Supabase
+                const { data, error } = await supabase
+                    .from('absensi')
+                    .insert([attendanceData]);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Show success message
+                document.getElementById('successMessage').classList.remove('hidden');
+                document.getElementById('submitAttendance').disabled = true;
+                document.getElementById('submitAttendance').textContent = 'Absensi Sudah Dikirim';
+                
+            } catch (error) {
+                console.error('Error saving attendance:', error);
+                
+                // Tampilkan pesan error yang lebih detail
+                let errorMessage = 'Terjadi kesalahan saat menyimpan absensi.';
+                if (error.message) {
+                    errorMessage += ' Detail: ' + error.message;
+                }
+                
+                // Buat notifikasi error yang lebih baik
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mt-4';
+                errorDiv.innerHTML = `
+                    <p class="font-semibold">Gagal menyimpan absensi!</p>
+                    <p class="text-sm">${errorMessage}</p>
+                `;
+                
+                // Hapus error sebelumnya jika ada
+                const existingError = document.querySelector('.bg-red-100');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Tambahkan error message
+                document.getElementById('submitAttendance').parentNode.appendChild(errorDiv);
+                
+                // Hapus error message setelah 5 detik
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+
+
+        function logout() {
+            currentStudent = '';
+            attendanceStatus = '';
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('attendancePage').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+            document.getElementById('successMessage').classList.add('hidden');
+            document.getElementById('hadirSlider').classList.remove('active');
+            document.getElementById('ijinSlider').classList.remove('active');
+            document.getElementById('ijinReason').classList.add('hidden');
+            document.getElementById('submitAttendance').disabled = true;
+            document.getElementById('submitAttendance').textContent = 'Kirim Absensi';
+            hideError();
+        }
+
+        // Initialize the app
+        updateDateTime();
+        
+        // Start connection process when page loads
+        window.addEventListener('load', () => {
+            initializeConnection();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98e43e0811e5df83',t:'MTc2MDQxNTE4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
